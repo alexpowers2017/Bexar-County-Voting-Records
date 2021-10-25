@@ -1,19 +1,23 @@
 # Bexar County Voting Records
- Processes publicly available election reports to make the data accesible for analysis.
+ Processes publicly available [election reports](https://www.bexar.org/2186/Historical-Election-Results) to make the data accesible for analysis.
 
 ### Description
-This project will allow users to easily analyze election data at the voting district (or precinct) level, the most granular level available. In its current state, it can parse two of 4 common report formats published by Electionware systems, the software used by Bexar County and many other counties in Texas. As development continues, this project will parse the remaining report formats and allow a user to choose specific information about specific elections they'd like to see, rather than pulling all of the data into one dataframe as it does now.
+This project will allow users to easily analyze election data at the voting district (or precinct) level, the most granular level available. In its current state, it can parse two of 4 common report formats published by Electionware systems, a software product used by Bexar County and many other counties in Texas. The next few goals for development are: 
+   1. Finish BigQuery ELT to fit the data into [this data warehouse schema](https://github.com/alexpowers2017/Bexar-County-Voting-Records/blob/main/code/sql_scripts/big%20query%20dataset%20diagram.png)
+   2. Parse the remaining report formats 
+   3. Expand collection to Collin County, TX
+   4. Allow a user to choose specific information about specific elections/offices they'd like to see
+  
 
 ### Tools Used
 
-##### R
-A majority of this project is currently in R. Within the R programs, most of the heavy lifting is done with R6 classes. Class definitions are located in the [election_report_classes](/code/election_report_classes) folder. 
 
-##### BigQuery
-The output of this project is exported to a csv, where it will be loaded into a BigQuery dataset. The table creation script and entity relationship diagram for this dataset are located in the [sql_scripts](/code/sql_scripts) folder. The primary and foreign key constraints outlined in the diagram are mostly conceptual, as BigQuery datasets aren't made to be as strict as a traditional data warehouse.
+**R**: A majority of this project is currently in R. Within the R programs, most of the heavy lifting is done with R6 classes. Class definitions are located in the [election_report_classes](/code/election_report_classes) folder. 
 
-##### Testing
-The testing suite for this project can be described in three words: **messy but thorough**. Better organizing the tests will be a priority, but for now you can view the scripts in the [testthat](tests/testthat) folder. Currently, around 77% of functions and methods used in this program are covered by tests. 
+**BigQuery**: The output of this project is exported to a csv, where it will be loaded into a BigQuery dataset. The table creation script and entity relationship diagram for this dataset are located in the [sql_scripts](/code/sql_scripts) folder. The primary and foreign key constraints outlined in the diagram are mostly conceptual, as BigQuery datasets aren't made to be as strict as a traditional data warehouse.
+
+### Testing
+Testing scripts are located in the [testthat](tests/testthat) folder. Currently, around 77% of functions and methods used in this program are covered by tests. While some tests were written after the fact, most of the regular expression and line identifications were written using test-driven development.
 
 <br>   
    
@@ -127,7 +131,7 @@ extract_total_votes = function(line) {
    
 #### Accomodating multiple report formats
 This program relies heavily on R6 classes and polymorphism to handle the different formats of election reports appropriately. The basic class structure is as follows:
-![Class Diagram]()
+![Class Diagram](https://raw.githubusercontent.com/alexpowers2017/Bexar-County-Voting-Records/main/code/election_report_classes/ElectionReport%20classes%20UML.png)
    
 The overall logic and steps are the same for all published reports, but some information is presented or formatted differently, so many smaller steps have to be adjusted. The simplest example is how it identifies whether a line holds a precinct value or not.
 
@@ -139,7 +143,7 @@ is_precinct = function(line) {
 ```
 
 In another form of the report (named ```ElectionReport_BexarPDF_BS``` because this was the first difference I noticed), some precincts have the suffix 'BS 1', as shown below:
-![BS Layout Example]()
+![BS Layout Example](https://raw.githubusercontent.com/alexpowers2017/Bexar-County-Voting-Records/main/data/election_reports/bs_report_layout.JPG)
    
 So in the ```ElectionReport_BexarPDF_BS``` class, the ```is_precinct``` method is overridden as:
 ```R
