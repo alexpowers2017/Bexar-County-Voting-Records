@@ -1,3 +1,4 @@
+C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/.gitignore="E19F940B"
 C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/LICENSE.txt="B2367630"
 C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/README.Rmd="506EDAAD"
 C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/code/R6 scratch.R="70A1A6AB"
@@ -23,6 +24,7 @@ C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/code/report_t
 C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/code/sql_scripts/create bigquery tables.sql="D94F053E"
 C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/code/update_precincts.R="F5ED6BE7"
 C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/data/manually_created/Election Totals Report urls.csv="CF170A50"
+C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/renv/.gitignore="3FBEE534"
 C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/tests/data/sample_dataframes_bexar_pdf.R="D9F9133F"
 C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/tests/testthat/test-ElectionReport.R="2DF8CF9F"
 C:/Users/AlexPowers/Documents/politics/Bexar County Voting Records/tests/testthat/test-ElectionReport_BexarPDF.R="4D801059"
