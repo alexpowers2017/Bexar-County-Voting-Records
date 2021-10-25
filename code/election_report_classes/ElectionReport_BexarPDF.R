@@ -35,25 +35,31 @@ ElectionReport_BexarPDF <- R6Class('ElectionReport_BexarPDF',
         #   DOWNLOADING REPORT   #
         ##########################
         
-        retreive_data = function() {
+        retrieve_data = function() {
             download.file(self$url, self$get_file_path() , mode='wb')
         },
         
         create_lines_df = function() { 
-            new_lines_df <- 
-                pdftools::pdf_text(self$get_file_path()) %>%    # Reads the PDF file (must already be downloaded) to char list 
-                self$collapse_pages() %>%                       # Creates char vect - each PDF line is an element
-                base::as.data.frame() %>%                       # Convert to one-column dataframe
-                dplyr::rename(lines = '.')                      # Change the column name to 'lines'
-            return(new_lines_df)
+            lines_df <- self$read_report_lines() %>%
+                base::as.data.frame() %>%   # Convert to one-column dataframe
+                dplyr::rename(lines = '.')  # Change the column name to 'lines'
+            return(lines_df)
         },
         
-            # Election report PDFs are read in as lists with each page as an element.
-            collapse_pages = function(file_text) {
-                single_string <- stringr::str_c(file_text, collapse="\n")  # Collapse all pages into one string, separated by \n
-                lines <- stringr::str_split(single_string, '\n')[[1]]       # Reads each line as an element in a char vector
+            read_report_lines = function() {
+                lines <- pdftools::pdf_text(self$get_file_path()) %>%   # Reads the PDF file (must already be downloaded using 'retrieve_data') to char list 
+                    self$collapse_pages()                               # Creates char vect - each PDF line is an element
                 return(lines)
             },
+        
+                # Election report PDFs are read in as lists with each page as an element.
+                    # This method converts it to one long character vector, where each 
+                    # element is a single line from the report, ignoring pages
+                collapse_pages = function(file_text) {
+                    single_string <- stringr::str_c(file_text, collapse="\n")   # Collapse all pages into one string, separated by \n
+                    lines <- stringr::str_split(single_string, '\n')[[1]]       # Reads each line as an element in a char vector
+                    return(lines)
+                },
         
         
         
@@ -96,21 +102,34 @@ ElectionReport_BexarPDF <- R6Class('ElectionReport_BexarPDF',
             },
             
             fill_NA_precincts_and_offices = function(df) {
+                # Here we have 'precinct' and 'office' columns, with the only values being held on the
+                    # first line of their section. by taking the columns as vectors and filling in the 
+                    # NA values, each row can be directly tied to its corresponding precinct/office
                 df['precinct'] <- self$fill_NAs_in_vector(df[,'precinct'])
                 df['office'] <- self$fill_NAs_in_vector(df[,'office'])
-                return(df %>% dplyr::filter(
-                    stringr::str_squish(lines) != precinct & 
-                    stringr::str_squish(lines) != office
-                ))
+                
+                return(self$remove_first_precinct_and_office_lines(df))
             },
             
+                # Takes a character vector and replaces all NAs with the most recent non-NA value
+                    # The PDF report is read in line by line, so one line will have a precinct or office
+                    # value, while the following lines contain information relevant to that precinct/office
                 fill_NAs_in_vector = function(vect) {
                     new_value <- NA
                     for(i in 1:length(vect)) {
-                        if(!is.na(vect[i])) { new_value <- vect[i] } 
-                        else { vect[i] <- new_value }
+                        if(!is.na(vect[i])) new_value <- vect[i] 
+                        else vect[i] <- new_value 
                     }
                     return(vect)
+                },
+        
+                remove_first_precinct_and_office_lines = function(df) {
+                    return(
+                        df %>% dplyr::filter(
+                            stringr::str_squish(lines) != precinct & 
+                            stringr::str_squish(lines) != office
+                        )
+                    )
                 },
             
             remove_extra_results = function(df) {
@@ -118,22 +137,7 @@ ElectionReport_BexarPDF <- R6Class('ElectionReport_BexarPDF',
                     !stringr::str_detect(lines, 'Write|Total Votes|ervotes')
                 ))
             },
-            
-            
-            extract_candidate = function(line) {
-                full_name <- stringr::str_extract(line, '([:alpha:].+[:alpha:])\\s{5}') %>%
-                    stringr::str_squish()
-                return(full_name)
-            },
-            
-            extract_total_votes = function(line) {
-                return(line %>%
-                    stringr::str_replace(self$extract_candidate(line), '') %>%
-                    stringr::str_squish() %>%
-                    stringr::str_extract('[\\d|\\,]+')
-                )
-            },
-            
+
             create_candidate_and_votes_columns = function(df) {
                 new_df <- df %>% dplyr::mutate(
                     candidate = self$extract_candidate(lines),
@@ -141,6 +145,20 @@ ElectionReport_BexarPDF <- R6Class('ElectionReport_BexarPDF',
                 ) %>% select(-lines)
                 return(new_df)
             },
+        
+                extract_total_votes = function(line) {
+                    return(line %>%
+                               stringr::str_replace(self$extract_candidate(line), '') %>%
+                               stringr::str_squish() %>%
+                               stringr::str_extract('[\\d|\\,]+')
+                    )
+                },
+        
+                    extract_candidate = function(line) {
+                        full_name <- stringr::str_extract(line, '([:alpha:].+[:alpha:])\\s{5}') %>%
+                            stringr::str_squish()
+                        return(full_name)
+                    },
             
             add_metadata_to_df = function(df) {
                 new_df <- df %>% dplyr::mutate(

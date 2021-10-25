@@ -22,7 +22,7 @@ get_all_election_reports <- function(meta_df) {
         report <- election_report_factory$create_election_report_object(elections_metadata[3,])
         
         # Download precinct-level file from Bexar County Elections website
-        report$retreive_data()
+        report$retrieve_data()
         
         # full election report with vote totals for each candidate at the precinct level
         full_df <- report$create_lines_df() %>%  # 1-column dataframe where each row is a line of text in the report
