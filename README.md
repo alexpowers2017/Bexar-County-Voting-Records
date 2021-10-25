@@ -67,7 +67,7 @@ create_lines_df = function() {
         },
 ```
 
-The first few lines of the report sample above would look like this:
+This would be the data frame returned by these methods if ran on the report sample above:
 lines|
 -----|
 Summary Results &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Report OFFICIAL RESULTS|
@@ -162,7 +162,7 @@ create_precinct_and_office_columns = function(df) {
     return(new_df)
 },
 ```
-The final product of these methods (and a separate method that filters out headers, footers, column titles, etc.) would be:
+The final product of these methods (and the ```is_useless_line``` method which filters out headers, footers, column titles, etc.) would be:
  lines|precinct|office
 -----|-------|-----
 Donald J. Trump/Michael R. Pence  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 322    36.97%   60         24         238|2010|President and Vice President
@@ -201,6 +201,8 @@ precinct|office|candidate|votes
 John Cornyn 2010|United States Senator|John Cornyn|320
 Mary "MJ" Hegar 2010|United States Senator|Mary "MJ" Hegar
 ...|...|...|...
+
+Now we've pretty much obtained our finished product. The program also adds metadata about the election to each line in new columns, which is not very efficient, but allows us to draw strict lines between extracting information from reports and defining structure/schema for storage. This data will all be sent to BigQuery, which is a better tool for data storage and organization.
 <br>   
    
 ### Accomodating multiple report formats
