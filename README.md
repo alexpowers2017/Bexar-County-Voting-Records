@@ -200,9 +200,6 @@ get_all_election_reports <- function(meta_df) {
             report$finalize_full_df()
         
         combined_df <- rbind(combined_df, full_df)
-        
-        rm(report)
-        rm(full_df)
     }
     
     return(combined_df)
