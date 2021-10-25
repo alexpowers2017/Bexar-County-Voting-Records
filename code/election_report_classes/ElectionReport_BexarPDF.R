@@ -193,7 +193,7 @@ ElectionReport_BexarPDF <- R6Class('ElectionReport_BexarPDF',
         },
             
             is_precinct = function(line) {
-                return(stringr::str_detect(line, '^\\d{3,5}$')) # Line whose only value is 3-5 consecutive digits
+                return(stringr::str_detect(line, '^\\d{3,5}$'))     # Line whose only value is 3-5 consecutive digits
             },
             
             # A 'result' line will contain the candidates name and vote totals
