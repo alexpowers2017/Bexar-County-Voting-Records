@@ -1,0 +1,5 @@
+
+setwd('../..')
+source('code/main.R')
+
+

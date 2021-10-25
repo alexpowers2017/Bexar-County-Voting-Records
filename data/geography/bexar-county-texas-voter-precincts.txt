@@ -1,0 +1,29 @@
+========================================================================
+ Bexar County, Texas Voter Precincts
+------------------------------------------------------------------------
+ https://koordinates.com/layer/98369-bexar-county-texas-voter-precincts/
+========================================================================
+From: Bexar County, Texas
+
+Description:
+  This object stores the voting precinct boundaries in Bexar County.
+  
+  © Bexar County Elections
+
+Projection: NAD83 / Texas South Central (ftUS)
+
+------------------------------------------------------------------------
+ Processing steps applied by Koordinates
+------------------------------------------------------------------------
+
+- imported to Koordinates in Esri JSON format on 11 Oct 2018
+- 1 invalid geometries fixed at import time 
+    (see https://koordinates.com/layer/98369-bexar-county-texas-voter-precincts/history/)
+- converted by Koordinates to Shapefile on 14 Oct 2021 (reference #2325148)
+
+====================
+No license specified
+====================
+
+No license was specified for this layer. This could mean default rights under copyright law for your legal jurisdiction may apply. Please check with Koordinates if you're unsure of your right to access and use this layer.
+

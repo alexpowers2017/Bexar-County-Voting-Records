@@ -1,0 +1,44 @@
+library(R6)
+library(stringr)
+library(pdftools)
+
+Person <- R6Class("Person",
+    public = list(
+        name = NULL,
+        hair = NULL,
+        initialize = function(name = NA, hair = NA) {
+            self$name <- name
+            self$hair <- hair
+            self$greet()
+        },
+        set_hair = function(new_hair_value) {
+            self$hair <- new_hair_value
+        },
+        greet = function() {
+            print(stringr::str_glue('Hello, my name is {self$name}.\n I have {self$hair} hair.'))
+        }
+    )                  
+)
+
+Borat <- R6Class("Borat",
+    inherit = Person,
+    public = list(
+        greet = function() {
+            print(stringr::str_glue('My name a {self$name}, I very excite to meet you. Entry, please! \n My hair is {self$hair} not.'))
+        }
+    )
+)
+
+
+
+
+john <- Person$new('John Oliver', 'black')
+
+john$set_hair('purple')
+
+john$greet()
+
+
+alex <- Borat$new('Alex', 'black') 
+alex$set_hair('red')
+alex$greet()
