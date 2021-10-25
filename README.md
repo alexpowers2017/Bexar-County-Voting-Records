@@ -13,7 +13,7 @@ A majority of this project is currently in R. Within the R programs, most of the
 The output of this project is exported to a csv, where it will be loaded into a BigQuery dataset. The table creation script and entity relationship diagram for this dataset are located in the [sql_scripts](/code/sql_scripts) folder. The primary and foreign key constraints outlined in the diagram are mostly conceptual, as BigQuery datasets aren't made to be as strict as a traditional data warehouse.
 
 ##### Testing
-The testing suite for this project can be described in three words: **messy but thorough**. Better organizing the tests will be a priority, but for now you can view the scripts in the [testthat](tests/testthat) folder.
+The testing suite for this project can be described in three words: **messy but thorough**. Better organizing the tests will be a priority, but for now you can view the scripts in the [testthat](tests/testthat) folder. Currently, around 77% of functions and methods used in this program are covered by tests. 
 
 <br>   
    
@@ -76,8 +76,7 @@ There are about a billion regular expressions (or maybe closer to 10, but it fee
         # NA values, each row can be directly tied to its corresponding precinct/office
     df['precinct'] <- self$fill_NAs_in_vector(df[,'precinct'])
     df['office'] <- self$fill_NAs_in_vector(df[,'office'])
-
-    return(self$remove_first_precinct_and_office_lines(df))
+    return(df)
 },
 
     # Takes a character vector and replaces all NAs with the most recent non-NA value
@@ -93,6 +92,16 @@ There are about a billion regular expressions (or maybe closer to 10, but it fee
     },
  ```
    
+These methods are then all wrapped up into ```create_precinct_and_office_columns```.
+```R
+create_precinct_and_office_columns = function(df) {
+    new_df <- df %>%
+        self$add_first_values() %>%
+        self$fill_NA_precincts_and_offices() %>%
+        self$remove_first_precinct_and_office_lines()
+    return(new_df)
+},
+```
 <br>   
    
 #### Extracting candidate and vote totals
@@ -111,5 +120,35 @@ extract_total_votes = function(line) {
             stringr::str_extract('([:alpha:].+[:alpha:])\\s{5}') %>%  # Sequence starting with a letter, ending with a letter, and followed by at least 5 spaces
             stringr::str_squish()
         return(full_name)
+    },
+```
+   
+<br>   
+   
+#### Accomodating multiple report formats
+This program relies heavily on R6 classes and polymorphism to handle the different formats of election reports appropriately. The basic class structure is as follows:
+![Class Diagram]()
+   
+The overall logic and steps are the same for all published reports, but some information is presented or formatted differently, so many smaller steps have to be adjusted. The simplest example is how it identifies whether a line holds a precinct value or not.
+
+This is the ```is_precinct``` method definition in the ```ElectionReport_BexarPDF``` class:
+```R
+is_precinct = function(line) {
+    return(stringr::str_detect(line, '^\\d{3,5}$'))     # Line whose only value is 3-5 consecutive digits
+},
+```
+
+In another form of the report (named ```ElectionReport_BexarPDF_BS``` because this was the first difference I noticed), some precincts have the suffix 'BS 1', as shown below:
+![BS Layout Example]()
+   
+So in the ```ElectionReport_BexarPDF_BS``` class, the ```is_precinct``` method is overridden as:
+```R
+#' @override
+is_precinct = function(line) {
+    return(stringr::str_detect(self$remove_bs(line), '^\\d{3,5}$')) # Line whose only value is 3-5 consecutive digits
+},
+
+    remove_bs = function(line) {
+        return(stringr::str_replace(line, '\\sBS\\s\\d', ''))       # Removes ' BS #' from string
     },
 ```
