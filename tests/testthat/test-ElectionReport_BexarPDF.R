@@ -180,8 +180,8 @@ test_that("fill_NAs_in_vector fills in values as it should", {
     expect_equal(bexar_pdf$fill_NAs_in_vector(sample_vect), expected_vect)
 })
 
-test_that("fill_NA_precincts_and_offices fills in values as it should", {
-    expect_equal(bexar_pdf$fill_NA_precincts_and_offices(expected_first_values), expected_filled_values)
+test_that("office and precinct columns are created as expected" , {
+    expect_equal(bexar_pdf$create_precinct_and_office_columns(expected_useless_lines_removed), expected_filled_values)
 })
 
 test_that("remove_extra_results removes unneeded vote total rows", {

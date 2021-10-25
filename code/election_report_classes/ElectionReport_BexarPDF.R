@@ -78,8 +78,7 @@ ElectionReport_BexarPDF <- R6Class('ElectionReport_BexarPDF',
         get_full_df_from_lines = function(df) {
             full_df <- df %>%
                 self$remove_useless_lines() %>%
-                self$add_first_values() %>%
-                self$fill_NA_precincts_and_offices() %>%
+                self$create_precinct_and_office_columns() %>%
                 self$remove_extra_results() %>%
                 self$create_candidate_and_votes_columns() %>%
                 self$add_metadata_to_df()
@@ -92,37 +91,44 @@ ElectionReport_BexarPDF <- R6Class('ElectionReport_BexarPDF',
                 )
                 return(new_df)
             },
-            
-            add_first_values = function(df) {
-                new_df <- df %>% dplyr::mutate(
-                    precinct = ifelse(self$is_precinct(lines), stringr::str_squish(lines), NA),
-                    office = ifelse(self$is_office(lines), stringr::str_squish(lines), NA)
-                )
+        
+            create_precinct_and_office_columns = function(df) {
+                new_df <- df %>%
+                    self$add_first_values() %>%
+                    self$fill_NA_precincts_and_offices() %>%
+                    self$remove_first_precinct_and_office_lines()
                 return(new_df)
             },
             
-            fill_NA_precincts_and_offices = function(df) {
-                # Here we have 'precinct' and 'office' columns, with the only values being held on the
-                    # first line of their section. by taking the columns as vectors and filling in the 
-                    # NA values, each row can be directly tied to its corresponding precinct/office
-                df['precinct'] <- self$fill_NAs_in_vector(df[,'precinct'])
-                df['office'] <- self$fill_NAs_in_vector(df[,'office'])
-                
-                return(self$remove_first_precinct_and_office_lines(df))
-            },
-            
-                # Takes a character vector and replaces all NAs with the most recent non-NA value
-                    # The PDF report is read in line by line, so one line will have a precinct or office
-                    # value, while the following lines contain information relevant to that precinct/office
-                fill_NAs_in_vector = function(vect) {
-                    new_value <- NA
-                    for(i in 1:length(vect)) {
-                        if(!is.na(vect[i])) new_value <- vect[i] 
-                        else vect[i] <- new_value 
-                    }
-                    return(vect)
+                add_first_values = function(df) {
+                    new_df <- df %>% dplyr::mutate(
+                        precinct = ifelse(self$is_precinct(lines), stringr::str_squish(lines), NA),
+                        office = ifelse(self$is_office(lines), stringr::str_squish(lines), NA)
+                    )
+                    return(new_df)
                 },
-        
+                
+                fill_NA_precincts_and_offices = function(df) {
+                    # Here we have 'precinct' and 'office' columns, with the only values being held on the
+                        # first line of their section. by taking the columns as vectors and filling in the 
+                        # NA values, each row can be directly tied to its corresponding precinct/office
+                    df['precinct'] <- self$fill_NAs_in_vector(df[,'precinct'])
+                    df['office'] <- self$fill_NAs_in_vector(df[,'office'])
+                    return(df)
+                },
+                
+                    # Takes a character vector and replaces all NAs with the most recent non-NA value
+                        # The PDF report is read in line by line, so one line will have a precinct or office
+                        # value, while the following lines contain information relevant to that precinct/office
+                    fill_NAs_in_vector = function(vect) {
+                        new_value <- NA
+                        for(i in 1:length(vect)) {
+                            if(!is.na(vect[i])) new_value <- vect[i] 
+                            else vect[i] <- new_value 
+                        }
+                        return(vect)
+                    },
+            
                 remove_first_precinct_and_office_lines = function(df) {
                     return(
                         df %>% dplyr::filter(
@@ -132,11 +138,11 @@ ElectionReport_BexarPDF <- R6Class('ElectionReport_BexarPDF',
                     )
                 },
             
-            remove_extra_results = function(df) {
-                return(df %>% dplyr::filter(
-                    !stringr::str_detect(lines, 'Write|Total Votes|ervotes')
-                ))
-            },
+                remove_extra_results = function(df) {
+                    return(df %>% dplyr::filter(
+                        !stringr::str_detect(lines, 'Write|Total Votes|ervotes')
+                    ))
+                },
 
             create_candidate_and_votes_columns = function(df) {
                 new_df <- df %>% dplyr::mutate(
@@ -148,14 +154,15 @@ ElectionReport_BexarPDF <- R6Class('ElectionReport_BexarPDF',
         
                 extract_total_votes = function(line) {
                     return(line %>%
-                               stringr::str_replace(self$extract_candidate(line), '') %>%
-                               stringr::str_squish() %>%
-                               stringr::str_extract('[\\d|\\,]+')
+                       stringr::str_replace(self$extract_candidate(line), '') %>%  # remove 'candidate' value from the line
+                       stringr::str_squish() %>%                                   # remove all leading and trailing spaces
+                       stringr::str_extract('[\\d|\\,]+')                          # take the first number in what is left of the line - this is the 'total votes'
                     )
                 },
         
                     extract_candidate = function(line) {
-                        full_name <- stringr::str_extract(line, '([:alpha:].+[:alpha:])\\s{5}') %>%
+                        full_name <- line %>%
+                            stringr::str_extract('([:alpha:].+[:alpha:])\\s{5}') %>%  # Sequence starting with a letter, ending with a letter, and followed by at least 5 spaces
                             stringr::str_squish()
                         return(full_name)
                     },
