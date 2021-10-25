@@ -19,7 +19,7 @@ get_all_election_reports <- function(meta_df) {
     
     for(i in 1:nrow(meta_df)) {
         # Create ElectionReport object for a single election
-        report <- election_report_factory$create_election_report_object(elections_metadata[3,])
+        report <- election_report_factory$create_election_report_object(elections_metadata[i,])
         
         # Download precinct-level file from Bexar County Elections website
         report$retrieve_data()
