@@ -1,7 +1,7 @@
 # Bexar County Voting Records
  Processes publicly available [election reports](https://www.bexar.org/2186/Historical-Election-Results) to make the data accesible for analysis.
 
-### Description
+## About
 This project will allow users to easily analyze election data at the voting district (or precinct) level, the most granular level available. In its current state, it can parse two of 4 common report formats published by Electionware systems, a software product used by Bexar County and many other counties in Texas. The next few goals for development are: 
    1. Finish BigQuery ELT to fit the data into [this data warehouse schema](https://github.com/alexpowers2017/Bexar-County-Voting-Records/blob/main/code/sql_scripts/big%20query%20dataset%20diagram.png)
    2. Parse the remaining report formats 
@@ -22,8 +22,10 @@ Testing scripts are located in the [testthat](tests/testthat) folder. Currently,
 <br>   
    
 ## Walkthrough
+This section provides detailed explanations, with code samples, for critical steps in the project.
 
 #### Reading data from the report
+----------------------------------
 Here's a page from one of the elections reports, with the sections we're especially interested in labelled.
 ![Report Layout](https://github.com/alexpowers2017/Bexar-County-Voting-Records/blob/main/data/election_reports/report_layout.JPG)
 
@@ -56,7 +58,8 @@ create_lines_df = function() {
    
 <br>   
    
-#### Matching vote counts with offices and precincts
+### Matching vote counts with offices and precincts
+----------------------------------
 There are about a billion regular expressions (or maybe closer to 10, but it feels like a lot) to identify each type of line in this report, culminating with the functions ```is_precinct```, ```is_office```, and ```is_result```, which identify the sections of interest on the above diagram.
  
  First, we'll use these to create 'precinct' and 'office' columns, each filled with NAs except for the lines holding the precinct or office value.
@@ -108,7 +111,8 @@ create_precinct_and_office_columns = function(df) {
 ```
 <br>   
    
-#### Extracting candidate and vote totals
+### Extracting candidate and vote totals
+----------------------------------
 Now that we can match vote counts for candidates to precincts and offices, all that's left is to extract the candidate name and vote total from the 'result' lines
 ```R
 extract_total_votes = function(line) {
@@ -129,7 +133,8 @@ extract_total_votes = function(line) {
    
 <br>   
    
-#### Accomodating multiple report formats
+### Accomodating multiple report formats
+----------------------------------
 This program relies heavily on R6 classes and polymorphism to handle the different formats of election reports appropriately. The basic class structure is as follows:
 ![Class Diagram](https://raw.githubusercontent.com/alexpowers2017/Bexar-County-Voting-Records/main/code/election_report_classes/ElectionReport%20classes%20UML.png)
    
@@ -156,3 +161,7 @@ is_precinct = function(line) {
         return(stringr::str_replace(line, '\\sBS\\s\\d', ''))       # Removes ' BS #' from string
     },
 ```
+
+
+## License
+This project is published under the [GNU AGPLv3](https://choosealicense.com/licenses/agpl-3.0/) license. When a modified version is used to provide a service over a network, the complete source code of the modified version must be made available.
