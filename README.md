@@ -1,6 +1,17 @@
 # Bexar County Voting Records
  Processes publicly available [election reports](https://www.bexar.org/2186/Historical-Election-Results) to make the data accesible for analysis.
 
+## Contents
+1. [About](#about)
+   1. [Tools Used](#tools-used)
+   2. [Testing](#testing)
+2. [Walkthrough](#walkthrough)
+   1. [Reading data from the report](#reading-data-from-the-report)
+   2. [Matching vote counts with offices and precincts](#matching-vote-counts-with-offices-and-precincts)
+   3. [Extracting candidate and vote totals](#extracting-candidate-and-vote-totals)
+   4. [Accomodating multiple report formats](#accomodating-multiple-report-formats)
+   5. [Putting it all together](#putting-it-all-together)
+3. [License](#license) 
 ## About
 This project will allow users to easily analyze election data at the voting district (or precinct) level, the most granular level available. In its current state, it can parse two of 4 common report formats published by Electionware systems, a software product used by Bexar County and many other counties in Texas. The next few goals for development are: 
    1. Finish BigQuery ELT to fit the data into [this data warehouse schema](https://github.com/alexpowers2017/Bexar-County-Voting-Records/blob/main/code/sql_scripts/big%20query%20dataset%20diagram.png)
@@ -12,19 +23,19 @@ This project will allow users to easily analyze election data at the voting dist
 ### Tools Used
 
 
-**R**: A majority of this project is currently in R. Within the R programs, most of the heavy lifting is done with R6 classes. Class definitions are located in the [election_report_classes](/code/election_report_classes) folder. 
+**R**: A majority of this project is currently in R. Within the R programs, most of the heavy lifting is done with [R6](https://github.com/r-lib/R6) classes. Class definitions are located in the [election_report_classes](/code/election_report_classes) folder. 
 
 **BigQuery**: The output of this project is exported to a csv, where it will be loaded into a BigQuery dataset. The table creation script and entity relationship diagram for this dataset are located in the [sql_scripts](/code/sql_scripts) folder. The primary and foreign key constraints outlined in the diagram are mostly conceptual, as BigQuery datasets aren't made to be as strict as a traditional data warehouse.
 
 ### Testing
-Testing scripts are located in the [testthat](tests/testthat) folder. Currently, around 77% of functions and methods used in this program are covered by tests. While some tests were written after the fact, most of the regular expression and line identifications were written using test-driven development.
+Unit tests are written using the [testthat](https://github.com/r-lib/testthat/) package. Testing scripts are located in the [testthat](tests/testthat) folder. Currently, around 77% of functions and methods used in this program are covered by tests. While some tests were written after the fact, most of the regular expression and line identifications were written using test-driven development.
 
 <br>   
    
 ## Walkthrough
 This section provides detailed explanations, with code samples, for critical steps in the project.
 
-#### Reading data from the report
+### Reading data from the report
 ----------------------------------
 Here's a page from one of the elections reports, with the sections we're especially interested in labelled.
 ![Report Layout](https://github.com/alexpowers2017/Bexar-County-Voting-Records/blob/main/data/election_reports/report_layout.JPG)
@@ -161,6 +172,43 @@ is_precinct = function(line) {
         return(stringr::str_replace(line, '\\sBS\\s\\d', ''))       # Removes ' BS #' from string
     },
 ```
+   
+<br>
+   
+### Putting it all together
+----------------------------------
+The mainprogram is currently designed to read in information about each election from a manually created 'elections metadata' .csv file, download all reports, extract the data from each, and put it all into one big dataframe. 
+```R
+get_all_election_reports <- function(meta_df) {
+    # Empty data frame that each election report will be inserted into
+    combined_df <- as.data.frame(matrix(nrow = 0, ncol = 8))
+    colnames(combined_df) <- c('precinct', 'office', 'candidate', 'votes', 'election_county', 'election_date', 'election_type', 'election_description')
+    
+    # Factory to create appropriate ElectionReport object based on metadata
+    election_report_factory <- ElectionReportFactory$new()
+    
+    for(i in 1:nrow(meta_df)) {
+        # Create ElectionReport object for a single election
+        report <- election_report_factory$create_election_report_object(elections_metadata[i,])
+        
+        # Download precinct-level file from Bexar County Elections website
+        report$retrieve_data()
+        
+        # full election report with vote totals for each candidate at the precinct level
+        full_df <- report$create_lines_df() %>%  # 1-column dataframe where each row is a line of text in the report
+            report$get_full_df_from_lines() %>%
+            report$finalize_full_df()
+        
+        combined_df <- rbind(combined_df, full_df)
+        
+        rm(report)
+        rm(full_df)
+    }
+    
+    return(combined_df)
+}
+```
+
 
 
 ## License
