@@ -238,7 +238,7 @@ is_precinct = function(line) {
    
 ### Putting it all together
 ----------------------------------
-The mainprogram is currently designed to read in information about each election from a manually created 'elections metadata' .csv file, download all reports, extract the data from each, and put it all into one big dataframe. 
+The main program is currently designed to read in information about each election from a manually created 'elections metadata' .csv file, download all reports, extract the data from each, and put it all into one big dataframe. 
 ```R
 get_all_election_reports <- function(meta_df) {
     # Empty data frame that each election report will be inserted into
